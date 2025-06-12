@@ -1,0 +1,26 @@
+site_name: Homelab
+theme:
+  name: material
+  palette:
+    scheme: slate
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.expand
+    # - navigation.indexes
+    # - navigation.sections
+    # - navigation.tabs
+markdown_extensions:
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - pymdownx.snippets
+  - pymdownx.tabbed
+  - pymdownx.details
+nav:
+  - k3s:
+    - Pre-requisites:
+      - Raspberry Pi: k3s/prerequisites/rpi.prereqs.md
+    - SSH: k3s/ssh.md
+    - Housekeeping: k3s/housekeeping.md
+    - Install: k3s/k3sup.md
+    - Kubevip: k3s/kubevip.md
