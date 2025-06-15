@@ -14,6 +14,8 @@ Most commands in the following assume superuser privileges, so you may want to r
 
 ## Install k3s Master Node
 
+Note: If there is an existing kubeconfig file from a previous installation, you may want to remove it first `rm -f ~/.kube/config`.
+
 ```bash
 k3sup install \
     --user pi \
@@ -31,16 +33,26 @@ k3sup install \
 validate that k3s is running
 
 ```bash
-kubectl get nodes
+export KUBECONFIG=/Users/asp/.kube/config
+kubectl config use-context default
+kubectl get node -o wide
 ```
 
 and check the status of the k3s service
 
 ```bash
 systemctl status k3s.service
+cat /etc/systemd/system/k3s.service
 ```
 
-Look specifically for `--tls-san k3s.local.spaelling.xyz --tls-san 192.168.10 --disable servicelb --disable traefik`. If any of these parameters are missing the installation did not go as planned.
+Look specifically for `--tls-san k3s.local.spaelling.xyz --tls-san 192.168.1.10 --disable servicelb --disable traefik`. If any of these parameters are missing the installation did not go as planned.
+
+If missing add to the `k3s.service` file and restart the service:
+
+```bash
+systemctl daemon-reload
+systemctl restart k3s.service
+```
 
 ## Join a new server to the cluster
 
