@@ -16,5 +16,5 @@ passwd root
 Keep the system up to date by running the following commands:
 
 ```bash
-apt update && sudo apt upgrade -y
+sudo apt update && sudo apt upgrade -y
 ```
