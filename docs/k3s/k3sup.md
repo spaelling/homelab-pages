@@ -33,7 +33,7 @@ k3sup install \
 validate that k3s is running
 
 ```bash
-export KUBECONFIG=/Users/asp/.kube/config
+export KUBECONFIG=~/.kube/config
 kubectl config use-context default
 kubectl get node -o wide
 ```
