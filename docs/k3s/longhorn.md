@@ -22,7 +22,9 @@ We can attempt to have Longhorn install prerequisites. This will install prerequ
 sudo ./longhornctl --kube-config ~/.kube/config --image longhornio/longhorn-cli:v1.9.0 install preflight
 ```
 
-We need helm to install Longhorn on local client.
+## Helm Installation
+
+[Install with Helm](https://longhorn.io/docs/1.9.0/deploy/install/install-with-helm/)
 
 ```bash
 brew install helm
