@@ -25,3 +25,6 @@ nav:
     - Install: k3s/k3sup.md
     - Kubevip: k3s/kubevip.md
     - Longhorn: k3s/longhorn.md
+  - HTTPS:
+    - cert-manager: traefik/cert_manager.md
+    - Traefik: traefik/traefik.md
