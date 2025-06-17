@@ -7,6 +7,7 @@ theme:
     - navigation.instant
     - navigation.tracking
     - navigation.expand
+    - content.code.copy
     # - navigation.indexes
     # - navigation.sections
     # - navigation.tabs
@@ -17,6 +18,7 @@ markdown_extensions:
   - pymdownx.tabbed
   - pymdownx.details
 nav:
+  - Homelab: index.md
   - Terminal:
     - Warp: terminal/warp/warp.md
     - Starship: terminal/starship/starship.md
@@ -28,6 +30,7 @@ nav:
     - Install: k3s/k3sup.md
     - Kubevip: k3s/kubevip.md
     - Longhorn: k3s/longhorn.md
+    - Sources: k3s/sources.md
   - HTTPS:
     - cert-manager: traefik/cert_manager.md
     - Traefik: traefik/traefik.md
