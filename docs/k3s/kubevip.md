@@ -68,3 +68,11 @@ kubectl get pods -n kube-system
 Add a DNS entry for the VIP in the DNS server, in this case A-record `k3s.local.spaelling.xyz=192.168.1.10`
 
 edit kubeconfig `sudo nano ~/.kube/config` and change the server address to `k3s.local.spaelling.xyz`.
+
+## Install the kube-vip Cloud Provider
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/kube-vip/kube-vip-cloud-provider/main/manifest/kube-vip-cloud-controller.yaml
+```
+
+We will create kube-vip Cloud Provider ConfigMap later when Traefik is up and running as we want it handle all ingress traffic.
