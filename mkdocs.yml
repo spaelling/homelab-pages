@@ -17,6 +17,9 @@ markdown_extensions:
   - pymdownx.tabbed
   - pymdownx.details
 nav:
+  - Terminal:
+    - Warp: terminal/warp/warp.md
+    - Starship: terminal/starship/starship.md
   - k3s:
     - Pre-requisites:
       - Raspberry Pi: k3s/prerequisites/rpi.prereqs.md
