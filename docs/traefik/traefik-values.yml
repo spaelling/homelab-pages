@@ -1,0 +1,21 @@
+deployment:
+  replicas: 3
+service:
+  annotations:
+    kube-vip.io/loadbalancerIPs: "192.168.1.20"
+ingressRoute:
+  dashboard:
+    enabled: true
+    entryPoints: [web, websecure]
+    matchRule: Host(`dashboard.traefik.local.spaelling.xyz`)
+    tls:
+      secretName: traefik-dashboard-tls
+      domains:
+      - main: dashboard.traefik.local.spaelling.xyz
+ports:
+  web:
+    redirections:
+      entryPoint:
+        to: websecure
+        scheme: https
+        permanent: true
