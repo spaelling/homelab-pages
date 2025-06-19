@@ -19,3 +19,13 @@ ports:
         to: websecure
         scheme: https
         permanent: true
+ingressClass:
+  name: traefik
+  isDefaultClass: true
+providers:
+  kubernetesCRD:
+    enabled: true
+    ingressClass: traefik
+  kubernetesIngress:
+    enabled: true
+    ingressClass: traefik
