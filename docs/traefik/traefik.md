@@ -38,3 +38,9 @@ Check the status of the Traefik IngressRoute and secrets:
 kubectl describe ingressroute traefik-dashboard -n traefik
 kubectl describe secrets traefik-dashboard-tls -n traefik
 ```
+
+Check the logs of the Traefik pods to see if there are any errors:
+
+```bash
+kubectl logs -n traefik -l app.kubernetes.io/name=traefik > traefik.log
+```
