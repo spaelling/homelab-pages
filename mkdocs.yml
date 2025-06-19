@@ -34,3 +34,5 @@ nav:
   - HTTPS:
     - cert-manager: traefik/cert_manager.md
     - Traefik: traefik/traefik.md
+  - Authentication:
+    - Authentik: authentik/authentik.md
