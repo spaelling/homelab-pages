@@ -1,1 +1,4 @@
 preview.sh
+docs/authentik/authentik-credentials.yaml
+docs/authentik/*.log
+**/.DS_Store
