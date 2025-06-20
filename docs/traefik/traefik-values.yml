@@ -11,7 +11,7 @@ ingressRoute:
     tls:
       secretName: traefik-dashboard-tls
       domains:
-      - main: dashboard.traefik.local.spaelling.xyz
+        - main: dashboard.traefik.local.spaelling.xyz
 ports:
   web:
     redirections:
@@ -26,6 +26,8 @@ providers:
   kubernetesCRD:
     enabled: true
     ingressClass: traefik
+    allowCrossNamespace: true
   kubernetesIngress:
     enabled: true
     ingressClass: traefik
+    allowCrossNamespace: true
