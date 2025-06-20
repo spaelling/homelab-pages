@@ -38,3 +38,22 @@ helm repo update
 helm install longhorn longhorn/longhorn --namespace longhorn-system --create-namespace --version 1.9.0
 kubectl -n longhorn-system get pod
 ```
+
+## Proxy
+
+When Traefik is up and running we can create an ingress and certificate for Longhorn.
+
+The existing frontend service is already behind a load balancer, so we delete that and create our own.
+
+```bash
+kubectl delete service longhorn-frontend -n longhorn-system
+kubectl apply -f longhorn-frontend.yaml
+kubectl apply -f certificate.yaml
+kubectl apply -f ingress.yaml
+```
+
+Wait for the certificate to be ready.
+
+```bash
+kubectl describe certificate longhorn-web-ui-tls -n longhorn-system
+```
