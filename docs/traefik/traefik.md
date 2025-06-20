@@ -44,3 +44,11 @@ Check the logs of the Traefik pods to see if there are any errors:
 ```bash
 kubectl logs -n traefik -l app.kubernetes.io/name=traefik > traefik.log
 ```
+
+## Authentik
+
+Setup authentication forwarding to the authentik service.
+
+```bash
+kubectl apply -f authentik-middleware.yaml
+```
