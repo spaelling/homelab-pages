@@ -67,6 +67,10 @@ then the certificate is not in use. Likely an issue with Traefik. Check the Trae
 
 Go to [https://authentik.local.spaelling.xyz/if/flow/initial-setup/](https://authentik.local.spaelling.xyz/if/flow/initial-setup/)
 
+Create a new user and add it to the admins group.
+
+Go to `settings` and under `MFA devices` register a passkey. Deactivate the `akadmin` user.
+
 ## Logs
 
 ```bash
