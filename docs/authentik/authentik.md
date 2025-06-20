@@ -91,3 +91,7 @@ kubectl get pvc -n authentik -o jsonpath="{.items[*].metadata.name}" | tr ' ' '\
 kubectl delete secret authentik-secret-key --namespace authentik
 kubectl delete secret authentik-postgresql-password --namespace authentik
 ```
+
+## Certificates
+
+We need both a certificate for the authentik service, but also for the outpost.
