@@ -22,10 +22,10 @@ We can upgrade a helm release with the following command (if ex. changing values
 helm upgrade --namespace=traefik --values=./traefik-values.yml traefik traefik/traefik
 ```
 
-Create a ConfigMap for the Traefik Cloud Provider:
+Create a ConfigMap for the Traefik Cloud Provider (`kubevip-configmap.yaml` is in the `k3s/kubevip` directory):
 
 ```bash
-kubectl create configmap -n kube-system kubevip --from-literal cidr-traefik=192.168.1.20/32
+kubectl apply -f kubevip-configmap.yaml
 ```
 
 This allows kubevip to assign an external IP address to the Traefik service.
