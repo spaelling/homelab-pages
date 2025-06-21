@@ -1,0 +1,8 @@
+apiVersion: v1
+data:
+  cidr-traefik: 192.168.1.20/32
+  cidr-pihole: 192.168.1.21/32
+kind: ConfigMap
+metadata:
+  name: kubevip
+  namespace: kube-system
