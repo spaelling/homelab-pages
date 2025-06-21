@@ -1,6 +1,6 @@
 # Traefik
 
-Add Traefik Labs chart repository to Helm and install it with the Helm command line
+Add Traefik Labs chart repository to Helm and install it with the Helm command line. All traefik helm chart values can be found [here](https://github.com/traefik/traefik-helm-chart/blob/master/traefik/values.yaml)
 
 ```bash
 helm repo add traefik https://traefik.github.io/charts
