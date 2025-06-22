@@ -11,3 +11,10 @@ kubectl create secret -n pihole generic pihole-webpassword --from-literal="passw
 It has a dedicated IP for the Pihole namespace, `192.168.1.21`.
 
 When pods are running test `tcping -f 4 -t 5 192.168.1.21 53` and `nslookup google.com 192.168.1.21`
+
+## TODO
+
+- Expose API
+- Deploy Nebula sync
+  - sync with main pihole instance
+- Access to web ui via authentik
