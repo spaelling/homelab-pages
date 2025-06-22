@@ -1,0 +1,14 @@
+replicas: 2
+ingress:
+  enabled: true
+  annotations:
+    traefik.ingress.kubernetes.io/router.middlewares: traefik-authentik-proxy-forwarder@kubernetescrd
+  ingressClassName: traefik
+  hosts:
+    - grafana.local.spaelling.xyz
+  tls:
+    - secretName: grafana-tls
+      hosts:
+        - grafana.local.spaelling.xyz
+persistence:
+  enabled: true
