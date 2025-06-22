@@ -14,7 +14,7 @@ Get your 'admin' user password by running:
 kubectl get secret --namespace lgtm grafana -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
 ```
 
-(wont need this if you use authentik)
+We will need it to make other users admin.
 
 And test the installation by running:
 
@@ -22,11 +22,13 @@ And test the installation by running:
 curl -kv https://grafana.local.spaelling.xyz/
 ```
 
-# Upgrade
+## Upgrade
 
 ```bash
 helm upgrade grafana grafana/grafana --namespace lgtm -f grafana-values.yaml
 ```
+
+Sometimes the previous pods are not delete, and the new gets stuck in an error state. Just delete some pods and it should resolve itself.
 
 # Authentik
 
