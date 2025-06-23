@@ -8,6 +8,8 @@ kubectl apply -f grafana-oauth-secret.yaml
 helm install grafana grafana/grafana --namespace lgtm -f grafana-values.yaml
 ```
 
+All Grafana helm chart values can be found in [Grafana Helm Chart](https://github.com/grafana/helm-charts/blob/main/charts/grafana/README.md).
+
 Get your 'admin' user password by running:
 
 ```bash
