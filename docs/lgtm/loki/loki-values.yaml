@@ -21,6 +21,17 @@ loki:
   auth_enabled: false
   tenants: []
 
+# increasing gateway replicas to deal with grafana timeouts
+gateway:
+  replicas: 2
+  autoscaling:
+    enabled: false
+    maxReplicas: 5
+  resources:
+    limits:
+      cpu: 500m
+      memory: 768Mi
+
 minio:
   enabled: true
 
