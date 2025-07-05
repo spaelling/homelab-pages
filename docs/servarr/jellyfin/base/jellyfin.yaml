@@ -10,7 +10,6 @@ spec:
     requests:
       storage: 10Gi
 ---
-# TODO: should be in servarr namespace
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
