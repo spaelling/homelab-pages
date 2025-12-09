@@ -5,26 +5,11 @@ metadata:
   namespace: home-assistant
 spec:
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   resources:
     requests:
       storage: 2Gi
   storageClassName: longhorn
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  name: home-assistant-time-pvc
-  namespace: home-assistant
-  labels:
-    app: home-assistant
-spec:
-  accessModes:
-    - ReadWriteOnce
-  storageClassName: longhorn
-  resources:
-    requests:
-      storage: 1Mi
 ---
 apiVersion: v1
 kind: PersistentVolume
@@ -51,14 +36,31 @@ metadata:
   namespace: home-assistant
 data:
   configuration.yaml: |
+    # === Core instance settings ===
     homeassistant:
       external_url: "https://home-assistant.local.spaelling.xyz"
 
+    # === Reverse proxy / Ingress ===
     http:
       use_x_forwarded_for: true
       trusted_proxies:
         - 10.42.0.0/16
         - 192.168.1.0/24
+
+    # === Recommended: enables a sensible set of built-ins ===
+    # Includes UI, cloud, history, mobile_app (unless you prefer explicit control)
+    default_config:
+
+    # === Explicitly enable Mobile App integration (keeps working even if default_config is removed) ===
+    mobile_app:
+
+    # === Person integration (manage people via UI: Settings → People) ===
+    person:
+
+    # include automation and script files
+    automation: !include automations.yaml
+    script: !include scripts.yaml
+    scenes: !include scenes.yaml
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -88,13 +90,14 @@ spec:
             # PVC for persistent data
             - mountPath: /config
               name: home-assistant-pvc-volume
+              readOnly: false
             # ConfigMap for configuration.yaml only
             - mountPath: /config/configuration.yaml
               name: home-assistant-config-volume
               subPath: configuration.yaml
             # Host time sync
             - mountPath: /etc/localtime
-              name: home-assistant-time-volume
+              name: host-time
               readOnly: true
       hostNetwork: true
       volumes:
@@ -104,9 +107,10 @@ spec:
         - name: home-assistant-config-volume
           configMap:
             name: home-assistant-config
-        - name: home-assistant-time-volume
-          persistentVolumeClaim:
-            claimName: home-assistant-time-pvc
+        - name: host-time
+          hostPath:
+            path: /etc/localtime
+            type: File
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate
