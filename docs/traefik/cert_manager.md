@@ -31,7 +31,7 @@ For details on yaml configuration, see:
 
 ```bash
 cd ~/git/Privat/homelab-pages/docs/traefik
-kubectl apply -n kube-system -f cloudflare_api_token.yaml
+kubectl apply -n cert-manager -f cloudflare_api_token.yaml
 kubectl apply -f acme_clusterissuer.yaml
 ```
 
