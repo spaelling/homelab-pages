@@ -30,6 +30,12 @@ kubectl apply -f kubevip-configmap.yaml
 
 This allows kubevip to assign an external IP address to the Traefik service.
 
+Create certificate for Traefik dashboard:
+
+```bash
+kubectl apply -f dashboard-certificate.yaml
+```
+
 ## Troubleshooting
 
 Check the status of the Traefik IngressRoute and secrets:
