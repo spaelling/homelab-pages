@@ -8,6 +8,15 @@ On the Raspberry Pi modify `/boot/firmware/cmdline.txt` to include `cgroup_enabl
 nano /boot/firmware/cmdline.txt
 ```
 
+Paste in `cgroup_enable=cpuset cgroup_memory=1 cgroup_enable=memory` (make sure it is all on one line)
+
+After a rebot verify with
+
+```bash
+# Show the *effective* kernel cmdline after boot
+cat /proc/cmdline
+```
+
 edit `/etc/dphys-swapfile` and set `CONF_SWAPSIZE=0`
 
 ```bash
@@ -17,6 +26,9 @@ nano /etc/dphys-swapfile
 then run the following commands to disable and reconfigure swap
 
 ```bash
+apt update
+apt install dphys-swapfile -y
+apt remove systemd-zram-generator -y
 dphys-swapfile swapoff
 dphys-swapfile setup
 ```
