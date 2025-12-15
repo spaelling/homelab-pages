@@ -48,3 +48,7 @@ kubectl get order -n home-assistant --no-headers -o custom-columns=":metadata.na
 
 kubectl get challenges -n home-assistant --no-headers -o custom-columns=":metadata.name" | xargs -I {} kubectl describe challenges {} -n home-assistant
 ```
+
+```bash
+kubectl exec -n home-assistant -it deploy/home-assistant -- sh
+```

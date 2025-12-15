@@ -60,7 +60,7 @@ data:
     # include automation and script files
     automation: !include automations.yaml
     script: !include scripts.yaml
-    scenes: !include scenes.yaml
+    scene: !include scenes.yaml
 ---
 apiVersion: apps/v1
 kind: Deployment
