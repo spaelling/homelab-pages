@@ -41,6 +41,19 @@ endpoints:
     conditions:
       ready: true
 ---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: proxmox-tls
+  namespace: traefik
+spec:
+  secretName: proxmox-tls
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  dnsNames:
+    - pve01.local.spaelling.xyz
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -59,3 +72,7 @@ spec:
                 name: proxmox-external-svc
                 port:
                   number: 8006
+  tls:
+    - hosts:
+        - pve01.local.spaelling.xyz
+      secretName: proxmox-tls
