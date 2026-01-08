@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: matter-server-pvc
+  namespace: home-assistant
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: longhorn
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: matter-server
+  namespace: home-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: matter-server
+  template:
+    metadata:
+      labels:
+        app: matter-server
+    spec:
+      hostNetwork: true # Critical for mDNS and Thread discovery
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: matter-server
+          image: ghcr.io/home-assistant-libs/python-matter-server:stable
+          args: ["--listen-address", "0.0.0.0"] # Force bind to all interfaces
+          ports:
+            - containerPort: 5580
+              name: ws-api
+          volumeMounts:
+            - mountPath: /data
+              name: matter-server-pvc
+              readOnly: false
+      volumes:
+        - name: matter-server-pvc
+          persistentVolumeClaim:
+            claimName: matter-server-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: matter-server-service
+  namespace: home-assistant
+  # annotations:
+  #   kube-vip.io/loadbalancerIPs: "192.168.1.22"
+spec:
+  # type: LoadBalancer
+  selector:
+    externalTrafficPolicy: Local
+    app: matter-server
+  ports:
+    - protocol: TCP
+      port: 5580
+      targetPort: 5580
