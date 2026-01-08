@@ -1,0 +1,164 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: home-assistant-pvc
+  namespace: home-assistant
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: longhorn
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: home-assistant-time-pv
+  namespace: home-assistant
+spec:
+  capacity:
+    storage: 1Mi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  hostPath:
+    path: /etc/localtime
+  claimRef:
+    name: home-assistant-time-pvc
+    namespace: default
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: home-assistant-config
+  namespace: home-assistant
+data:
+  configuration.yaml: |
+    # === Core instance settings ===
+    homeassistant:
+      external_url: "https://home-assistant.local.spaelling.xyz"
+
+    # === Reverse proxy / Ingress ===
+    http:
+      use_x_forwarded_for: true
+      trusted_proxies:
+        - 10.42.0.0/16
+        - 192.168.1.0/24
+
+    # === Recommended: enables a sensible set of built-ins ===
+    # Includes UI, cloud, history, mobile_app (unless you prefer explicit control)
+    default_config:
+
+    # === Explicitly enable Mobile App integration (keeps working even if default_config is removed) ===
+    mobile_app:
+
+    # === Person integration (manage people via UI: Settings → People) ===
+    person:
+
+    # include automation and script files
+    automation: !include automations.yaml
+    script: !include scripts.yaml
+    scene: !include scenes.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: home-assistant
+  namespace: home-assistant
+  labels:
+    app: home-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: home-assistant
+  template:
+    metadata:
+      labels:
+        app: home-assistant
+    spec:
+      containers:
+        - name: home-assistant
+          image: ghcr.io/home-assistant/home-assistant:stable
+          securityContext:
+            privileged: true
+          ports:
+            - containerPort: 8123
+          volumeMounts:
+            # PVC for persistent data
+            - mountPath: /config
+              name: home-assistant-pvc-volume
+              readOnly: false
+            # ConfigMap for configuration.yaml only
+            - mountPath: /config/configuration.yaml
+              name: home-assistant-config-volume
+              subPath: configuration.yaml
+            # Host time sync
+            - mountPath: /etc/localtime
+              name: host-time
+              readOnly: true
+      hostNetwork: true
+      volumes:
+        - name: home-assistant-pvc-volume
+          persistentVolumeClaim:
+            claimName: home-assistant-pvc
+        - name: home-assistant-config-volume
+          configMap:
+            name: home-assistant-config
+        - name: host-time
+          hostPath:
+            path: /etc/localtime
+            type: File
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: home-assistant-tls
+  namespace: home-assistant
+spec:
+  secretName: home-assistant-tls
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  dnsNames:
+    - home-assistant.local.spaelling.xyz
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: home-assistant-ingress
+  namespace: home-assistant
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: home-assistant.local.spaelling.xyz
+      http:
+        paths:
+          - backend:
+              service:
+                name: home-assistant-lb
+                port:
+                  number: 8123
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - home-assistant.local.spaelling.xyz
+      secretName: home-assistant-tls
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: home-assistant-lb
+  namespace: home-assistant
+  labels:
+    app: home-assistant
+spec:
+  ports:
+    - port: 8123
+      targetPort: 8123
+      name: home-assistant-web
+  selector:
+    app: home-assistant
+  type: LoadBalancer
