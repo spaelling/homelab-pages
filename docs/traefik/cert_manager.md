@@ -35,6 +35,40 @@ kubectl apply -n cert-manager -f cloudflare_api_token.yaml
 kubectl apply -f acme_clusterissuer.yaml
 ```
 
+To ensure it does not use local DNS to verify acme challenges
+
+```bash
+kubectl edit deployment cert-manager -n cert-manager
+```
+
+and make the change using Vim:
+
+When Vim opens, you are in Normal Mode. You cannot type yet.
+Move your cursor to where you want to add the text.
+Press i on your keyboard. You should see -- INSERT -- at the bottom left.
+Now you can type or paste your changes.
+Press the Esc key.
+Type `:wq` — This stands for Write (save) and Quit. Press Enter.
+
+```yaml
+containers:
+      - args:
+        - --v=2
+        - --cluster-resource-namespace=$(POD_NAMESPACE)
+        - --leader-election-namespace=kube-system
+        # --- ADD THESE TWO LINES ---
+        - --dns01-recursive-nameservers-only
+        - --dns01-recursive-nameservers=1.1.1.1:53,8.8.8.8:53
+        # ---------------------------
+        image: quay.io/jetstack/cert-manager-controller:v1.x.x
+```
+
+We can force a restart of the cert-manager pods to pick up the changes:
+
+```bash
+kubectl rollout restart deployment cert-manager -n cert-manager
+```
+
 ## Troubleshooting
 
 Check the status of the certificate in the `traefik` namespace:
