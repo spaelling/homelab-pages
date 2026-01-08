@@ -27,7 +27,6 @@ spec:
   claimRef:
     name: home-assistant-time-pvc
     namespace: default
-
 ---
 apiVersion: v1
 kind: ConfigMap
