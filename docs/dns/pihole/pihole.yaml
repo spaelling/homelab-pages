@@ -74,6 +74,7 @@ metadata:
     kube-vip.io/loadbalancerIPs: "192.168.1.21"
 spec:
   type: LoadBalancer
+  externalTrafficPolicy: Cluster
   selector:
     app: pihole
   ports:
@@ -93,7 +94,7 @@ metadata:
   namespace: pihole
 spec:
   serviceName: pihole
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: pihole
@@ -117,6 +118,8 @@ spec:
               name: pihole-http
               protocol: TCP
           env:
+            - name: DNSMASQ_LISTENING
+              value: "all" # This tells Pi-hole to accept queries from any network interface
             - name: TZ
               value: "Europe/Copenhagen"
             - name: WEBPASSWORD
