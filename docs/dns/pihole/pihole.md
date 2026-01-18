@@ -31,6 +31,12 @@ When making changes check the statefulset status:
 kubectl rollout status statefulset pihole -n pihole
 ```
 
+## Pihole 0
+
+```bash
+kubectl apply -f pihole-0-ingress.yaml
+```
+
 ## TODO
 
 - Expose API
