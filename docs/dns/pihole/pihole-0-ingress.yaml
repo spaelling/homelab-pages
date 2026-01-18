@@ -12,38 +12,27 @@ metadata:
   name: pihole-external-svc
   namespace: traefik
   annotations:
-    # This tells Traefik to use the transport we created above
+    # Use the actual name of the resource: pihole-transport
     traefik.ingress.kubernetes.io/service.serverstransport: traefik-pihole-transport@kubernetescrd
-    traefik.ingress.kubernetes.io/service.serversscheme: https
 spec:
   ports:
-    - name: http-web
+    - name: pi-port # Standardized name
       protocol: TCP
       port: 80
       targetPort: 80
 ---
-apiVersion: traefik.io/v1alpha1
-kind: Middleware
-metadata:
-  name: pihole-redirect
-  namespace: traefik
-spec:
-  addPrefix:
-    prefix: /admin
----
 apiVersion: discovery.k8s.io/v1
 kind: EndpointSlice
 metadata:
-  name: pihole-external-svc-1 # Name should be unique, often suffixed
+  name: pihole-external-svc-1
   namespace: traefik
   labels:
-    # This label is CRITICAL; it must match your Service name
     kubernetes.io/service-name: pihole-external-svc
 addressType: IPv4
 ports:
-  - name: https
+  - name: pi-port # MUST match Service port name exactly
     protocol: TCP
-    port: 80
+    port: 80 # Port Pi-hole is listening on
 endpoints:
   - addresses:
       - "192.168.1.60"
@@ -68,9 +57,6 @@ kind: Ingress
 metadata:
   name: pihole-ingress
   namespace: traefik
-  annotations:
-    # This automatically sends / to /admin
-    traefik.ingress.kubernetes.io/router.middlewares: traefik-pihole-redirect@kubernetescrd
 spec:
   ingressClassName: traefik
   rules:
@@ -83,7 +69,7 @@ spec:
               service:
                 name: pihole-external-svc
                 port:
-                  name: http-web
+                  name: pi-port
   tls:
     - hosts:
         - pihole.local.spaelling.xyz
