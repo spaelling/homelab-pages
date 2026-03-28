@@ -38,7 +38,39 @@ spec:
               done
 
               # Force the configuration file to use our PTY
-              echo 'OTBR_AGENT_OPTS="-I wpan0 -B eth0 spinel+hdlc+uart:///dev/ttyPoE trel://eth0"' > /etc/default/otbr-agent
+              echo 'OTBR_AGENT_OPTS="-I wpan0 -B eth0 --rest-listen-address 0.0.0.0 spinel+hdlc+uart:///dev/ttyPoE trel://eth0"' > /etc/default/otbr-agent
 
               /app/script/server
               tail -f /dev/null
+          # Added: Restart the pod if the OTBR agent stops responding
+          livenessProbe:
+            exec:
+              command:
+                - ot-ctl
+                - state
+            initialDelaySeconds: 60
+            periodSeconds: 30
+          ports:
+            - containerPort: 80
+              name: web-gui
+            - containerPort: 8081
+              name: ot-agent
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: otbr-service
+  namespace: home-assistant
+spec:
+  type: ClusterIP
+  selector:
+    app: otbr
+  ports:
+    - name: web-gui
+      protocol: TCP
+      port: 80
+      targetPort: 80
+    - name: ot-agent
+      protocol: TCP
+      port: 8081
+      targetPort: 8081
