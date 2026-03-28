@@ -5,6 +5,8 @@ metadata:
   namespace: home-assistant
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: otbr
@@ -26,29 +28,49 @@ spec:
               value: "0"
             - name: RADIO_URL
               value: "spinel+hdlc+uart:///dev/ttyPoE"
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - "/bin/sh"
+                  - "-c"
+                  - |
+                    # Wait for the agent to wake up
+                    until ot-ctl state >/dev/null 2>&1; do sleep 2; done;
+
+                    # Force the configuration regardless of current state
+                    ot-ctl ifconfig down
+                    ot-ctl dataset init new
+                    ot-ctl networkname OpenThread-14a0
+                    ot-ctl panid 0x14a0
+                    ot-ctl channel 24
+                    ot-ctl dataset commit active
+                    ot-ctl ifconfig up
+                    ot-ctl thread start
           command: ["/bin/bash", "-c"]
           args:
             - |
               apt-get update && apt-get install -y socat;
               socat -d -d PTY,link=/dev/ttyPoE,raw,echo=0,waitslave TCP:192.168.1.168:6638 &
+
               echo "Waiting for /dev/ttyPoE..."
               for i in {1..30}; do
                 [ -e /dev/ttyPoE ] && break
                 sleep 1
               done
 
-              # Force the configuration file to use our PTY
               echo 'OTBR_AGENT_OPTS="-I wpan0 -B eth0 --rest-listen-address 0.0.0.0 spinel+hdlc+uart:///dev/ttyPoE trel://eth0"' > /etc/default/otbr-agent
 
               /app/script/server
+
+              # Essential: Keep the container alive after the script spawns background tasks
               tail -f /dev/null
-          # Added: Restart the pod if the OTBR agent stops responding
           livenessProbe:
             exec:
               command:
                 - ot-ctl
                 - state
-            initialDelaySeconds: 60
+            initialDelaySeconds: 90 # Increased to allow for apt-get install and socat
             periodSeconds: 30
           ports:
             - containerPort: 80
@@ -74,3 +96,42 @@ spec:
       protocol: TCP
       port: 8081
       targetPort: 8081
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: otbr-tls
+  namespace: home-assistant
+spec:
+  secretName: otbr-tls
+  issuerRef:
+    name: letsencrypt
+    kind: ClusterIssuer
+  dnsNames:
+    - otbr.local.spaelling.xyz
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: otbr-ingress
+  namespace: home-assistant
+  annotations:
+    # Traefik specific annotations (if needed for your setup)
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: otbr.local.spaelling.xyz
+      http:
+        paths:
+          - backend:
+              service:
+                name: otbr-service
+                port:
+                  number: 80
+            path: /
+            pathType: Prefix
+  tls:
+    - hosts:
+        - otbr.local.spaelling.xyz
+      secretName: otbr-tls
