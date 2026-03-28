@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: otbr-server
+  namespace: home-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: otbr
+  template:
+    metadata:
+      labels:
+        app: otbr
+    spec:
+      hostNetwork: true
+      containers:
+        - name: otbr
+          image: openthread/otbr:latest
+          securityContext:
+            privileged: true
+          env:
+            - name: NAT64
+              value: "0"
+            - name: FIREWALL
+              value: "0"
+            - name: RADIO_URL
+              value: "spinel+hdlc+uart:///dev/ttyPoE"
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              apt-get update && apt-get install -y socat;
+              socat -d -d PTY,link=/dev/ttyPoE,raw,echo=0,waitslave TCP:192.168.1.168:6638 &
+              echo "Waiting for /dev/ttyPoE..."
+              for i in {1..30}; do
+                [ -e /dev/ttyPoE ] && break
+                sleep 1
+              done
+
+              # Force the configuration file to use our PTY
+              echo 'OTBR_AGENT_OPTS="-I wpan0 -B eth0 spinel+hdlc+uart:///dev/ttyPoE trel://eth0"' > /etc/default/otbr-agent
+
+              /app/script/server
+              tail -f /dev/null
