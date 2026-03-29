@@ -22,34 +22,22 @@ spec:
           securityContext:
             privileged: true
           env:
+            - name: OTBR_AGENT_OPTS
+              value: "-I wpan0 -n OpenThread-14a0"
+            - name: NETWORK_NAME
+              value: "OpenThread-14a0"
+            - name: PAN_ID
+              value: "0x14a0"
             - name: NAT64
               value: "0"
             - name: FIREWALL
               value: "0"
             - name: RADIO_URL
               value: "spinel+hdlc+uart:///dev/ttyPoE"
-          lifecycle:
-            postStart:
-              exec:
-                command:
-                  - "/bin/sh"
-                  - "-c"
-                  - |
-                    # Wait for the agent to wake up
-                    until ot-ctl state >/dev/null 2>&1; do sleep 2; done;
-
-                    # Force the configuration regardless of current state
-                    ot-ctl ifconfig down
-                    ot-ctl dataset init new
-                    ot-ctl networkname OpenThread-14a0
-                    ot-ctl panid 0x14a0
-                    ot-ctl channel 24
-                    ot-ctl dataset commit active
-                    ot-ctl ifconfig up
-                    ot-ctl thread start
           command: ["/bin/bash", "-c"]
           args:
             - |
+              # 1. Install dependencies and establish PoE tunnel
               apt-get update && apt-get install -y socat;
               socat -d -d PTY,link=/dev/ttyPoE,raw,echo=0,waitslave TCP:192.168.1.168:6638 &
 
@@ -59,18 +47,39 @@ spec:
                 sleep 1
               done
 
+              # 2. Set agent options and start the OTBR server in the background
               echo 'OTBR_AGENT_OPTS="-I wpan0 -B eth0 --rest-listen-address 0.0.0.0 spinel+hdlc+uart:///dev/ttyPoE trel://eth0"' > /etc/default/otbr-agent
+              /app/script/server &
 
-              /app/script/server
+              # 3. Wait for the agent to initialize
+              echo "Waiting for otbr-agent to wake up..."
+              sleep 10
+              until ot-ctl state >/dev/null 2>&1; do sleep 2; done
 
-              # Essential: Keep the container alive after the script spawns background tasks
+              # 4. FORCE the 14a0 configuration with a Higher Timestamp
+              # This is the "Nuclear Option" to override random names
+              ot-ctl thread stop
+              ot-ctl ifconfig down
+              ot-ctl dataset init new
+              ot-ctl dataset activetimestamp 10
+              ot-ctl dataset networkname OpenThread-14a0
+              ot-ctl dataset panid 0x14a0
+              ot-ctl dataset channel 24
+              ot-ctl dataset commit active
+              ot-ctl ifconfig up
+              ot-ctl thread start
+
+              echo "Configuration applied with High Priority (Timestamp 10)."
+              ot-ctl dataset active
+
+              # Keep container alive
               tail -f /dev/null
           livenessProbe:
             exec:
               command:
                 - ot-ctl
                 - state
-            initialDelaySeconds: 90 # Increased to allow for apt-get install and socat
+            initialDelaySeconds: 120
             periodSeconds: 30
           ports:
             - containerPort: 80
@@ -116,7 +125,6 @@ metadata:
   name: otbr-ingress
   namespace: home-assistant
   annotations:
-    # Traefik specific annotations (if needed for your setup)
     traefik.ingress.kubernetes.io/router.entrypoints: websecure
 spec:
   ingressClassName: traefik
