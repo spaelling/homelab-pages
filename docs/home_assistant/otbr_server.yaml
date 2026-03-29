@@ -56,20 +56,21 @@ spec:
               sleep 10
               until ot-ctl state >/dev/null 2>&1; do sleep 2; done
 
-              # 4. FORCE the 14a0 configuration with a Higher Timestamp
-              # This is the "Nuclear Option" to override random names
+              # 4. FORCE the 14a0 configuration with the Phone's known DNA
               ot-ctl thread stop
               ot-ctl ifconfig down
               ot-ctl dataset init new
-              ot-ctl dataset activetimestamp 10
+              ot-ctl dataset activetimestamp 20
               ot-ctl dataset networkname OpenThread-14a0
+              ot-ctl dataset extpanid 916b198c2c1a0a3f
+              ot-ctl dataset networkkey 80d1d7b02b6f6ae50f80546d7321c5a5
               ot-ctl dataset panid 0x14a0
               ot-ctl dataset channel 24
               ot-ctl dataset commit active
               ot-ctl ifconfig up
               ot-ctl thread start
 
-              echo "Configuration applied with High Priority (Timestamp 10)."
+              echo "Configuration applied with High Priority (Timestamp 20)."
               ot-ctl dataset active
 
               # Keep container alive
