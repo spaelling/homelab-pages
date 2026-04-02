@@ -57,3 +57,26 @@ nmcli connection up static-eth0
 ```
 
 use `ip a` to verify the static IP address is set correctly
+
+## Fans
+
+Set the fans to only turn on when the CPU temperature exceeds 60 degrees Celsius.
+
+```bash
+sudo nano /boot/firmware/config.txt
+```
+
+Add this line to the end of the file:
+
+```text
+# Enable cooling fan control
+dtoverlay=gpio-fan,gpiopin=14,temp=70000
+```
+
+We can check the temperature of the CPU with the following command:
+
+```bash
+watch -n 1 vcgencmd measure_temp
+```
+
+We can check the fan speed using `cat /sys/class/thermal/cooling_device0/cur_state` which will be a value between 0 and 255. Or checking `GPIO 14` using `pinctrl get 14` where `hi` means the fan is on (100% speed) and `lo` means the fan is off (0% speed).
