@@ -89,3 +89,46 @@ kubectl -n home-assistant rollout status deploy/matter-server
 kubectl get pod -n home-assistant -l app=matter-server -o jsonpath='{.items[0].status.hostIP}'
 tcping -f 4 -t 5 192.168.1.12 5580
 ```
+
+## OTBR Server
+
+```bash
+kubectl apply -f otbr_server.yaml
+```
+
+```bash
+kubectl logs -f deployment/otbr-server -n home-assistant
+```
+
+Look for these entries in the log:
+
+
+kubectl delete pods -n home-assistant -l app=otbr --force --grace-period=0
+
+## HACS
+
+Because the Home Assistant container is ephemeral, HACS must be injected into the persistent volume (`/config`) via an `initContainer`. This ensures HACS persists across pod restarts and image updates.
+
+Verify File Existence
+
+```bash
+kubectl exec -it <pod-name> -n home-assistant -- ls -l /config/custom_components/hacs/manifest.json
+```
+
+Verify Integration Loader. Check the logs for the specific "Custom Integration" warning, which confirms Home Assistant has detected the files:
+
+```bash
+kubectl logs -l app=home-assistant -n home-assistant --tail=100 | grep "hacs"
+```
+
+Cache Clearing (Maintenance). If HACS is present in the files but missing from the UI "Add Integration" search, the internal component cache must be wiped to force a re-scan:
+
+```bash
+kubectl exec -it <pod-name> -n home-assistant -- rm -rf /config/.storage/custom_components
+```
+
+**Note:** Always ensure **Advanced Mode** is enabled in your Home Assistant User Profile before attempting to add HACS.
+
+Once the pod restarts and the logs confirm detection, the integration is activated via the UI. If the search bar is unresponsive due to browser caching, the setup flow is forced via direct URL:
+
+`[http://<NODE_IP>:8123](https://home-assistant.local.spaelling.xyz/)/config/integrations/dashboard/add?domain=hacs`
