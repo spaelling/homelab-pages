@@ -16,6 +16,16 @@ spec:
         app: otbr
     spec:
       hostNetwork: true
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  # This ensures the pod ONLY runs on Node 1
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - rpi01
       containers:
         - name: otbr
           image: openthread/otbr:latest
