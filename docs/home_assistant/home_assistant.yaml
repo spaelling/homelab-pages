@@ -92,28 +92,34 @@ spec:
                     values:
                       - rpi01
       initContainers:
-        - name: install-hacs
+        - name: install-custom-components
           image: alpine:latest
           command: ["/bin/sh", "-c"]
           args:
             - |
               apk add --no-cache wget unzip ca-certificates bash;
 
-              TARGET="/config/custom_components/hacs"
-
-              # Check if manifest exists; if not, download and extract
-              if [ ! -f "$TARGET/manifest.json" ]; then
-                echo "HACS manifest not found. Installing..."
-                mkdir -p "$TARGET"
-                cd "$TARGET"
+              # Function to install HACS
+              if [ ! -f "/config/custom_components/hacs/manifest.json" ]; then
+                echo "Installing HACS..."
+                mkdir -p /config/custom_components/hacs
+                cd /config/custom_components/hacs
                 wget https://github.com/hacs/integration/releases/latest/download/hacs.zip
-                unzip -o hacs.zip
-                rm hacs.zip
-              else
-                echo "HACS already installed at $TARGET."
+                unzip -o hacs.zip && rm hacs.zip
               fi
 
-              # Ensure permissions are correct for the Home Assistant user
+              # Function to install Warmlink
+              if [ ! -f "/config/custom_components/warmlink/manifest.json" ]; then
+                echo "Installing Warmlink..."
+                mkdir -p /config/custom_components/warmlink
+                cd /tmp
+                wget -O warmlink.zip https://github.com/srbjessen/ha-warmlink/releases/latest/download/warmlink-v70.0-integration-only.zip
+                unzip -o warmlink.zip
+                # Move files from the nested folder to the correct location
+                mv custom_components/warmlink/* /config/custom_components/warmlink/
+                rm -rf custom_components warmlink.zip
+              fi
+
               chown -R 1000:1000 /config/custom_components || true
           volumeMounts:
             - name: home-assistant-pvc-volume
