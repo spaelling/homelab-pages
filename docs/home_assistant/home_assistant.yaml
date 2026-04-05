@@ -70,6 +70,8 @@ metadata:
     app: home-assistant
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: home-assistant
@@ -78,6 +80,44 @@ spec:
       labels:
         app: home-assistant
     spec:
+      hostNetwork: true
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  # This ensures the pod ONLY runs on Node 1
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - rpi01
+      initContainers:
+        - name: install-hacs
+          image: alpine:latest
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              apk add --no-cache wget unzip ca-certificates bash;
+
+              TARGET="/config/custom_components/hacs"
+
+              # Check if manifest exists; if not, download and extract
+              if [ ! -f "$TARGET/manifest.json" ]; then
+                echo "HACS manifest not found. Installing..."
+                mkdir -p "$TARGET"
+                cd "$TARGET"
+                wget https://github.com/hacs/integration/releases/latest/download/hacs.zip
+                unzip -o hacs.zip
+                rm hacs.zip
+              else
+                echo "HACS already installed at $TARGET."
+              fi
+
+              # Ensure permissions are correct for the Home Assistant user
+              chown -R 1000:1000 /config/custom_components || true
+          volumeMounts:
+            - name: home-assistant-pvc-volume
+              mountPath: /config
       containers:
         - name: home-assistant
           image: ghcr.io/home-assistant/home-assistant:stable
@@ -98,7 +138,6 @@ spec:
             - mountPath: /etc/localtime
               name: host-time
               readOnly: true
-      hostNetwork: true
       volumes:
         - name: home-assistant-pvc-volume
           persistentVolumeClaim:
