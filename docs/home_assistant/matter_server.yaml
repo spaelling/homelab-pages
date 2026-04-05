@@ -18,6 +18,8 @@ metadata:
   namespace: home-assistant
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: matter-server
@@ -27,6 +29,16 @@ spec:
         app: matter-server
     spec:
       hostNetwork: true # Critical for mDNS and Thread discovery
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  # This ensures the pod ONLY runs on Node 1
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - rpi01
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: matter-server
