@@ -9,6 +9,11 @@ device_code = sys.argv[3]
 protocolCode = sys.argv[4]
 temperature = sys.argv[5]
 
+allowed_protocol_codes = {"compensate_offset", "Mode"}
+if protocolCode not in allowed_protocol_codes:
+    print("Error: protocolCode must be either 'compensate_offset' or 'Mode'")
+    sys.exit(1)
+
 login_url = 'https://cloud.linked-go.com:449/crmservice/api/app/user/login'
 control_url = 'https://cloud.linked-go.com:449/crmservice/api/app/device/control'
 
