@@ -132,3 +132,148 @@ kubectl exec -it <pod-name> -n home-assistant -- rm -rf /config/.storage/custom_
 Once the pod restarts and the logs confirm detection, the integration is activated via the UI. If the search bar is unresponsive due to browser caching, the setup flow is forced via direct URL:
 
 `[http://<NODE_IP>:8123](https://home-assistant.local.spaelling.xyz/)/config/integrations/dashboard/add?domain=hacs`
+
+### VS COde Server
+
+The VS Code Server is deployed as a separate pod within the `home-assistant` namespace. It provides a web-based IDE accessible via `https://code.home-assistant.local.spaelling.xyz`. This allows for direct editing of Home Assistant configuration files without needing to access the pod's shell.
+
+```bash
+kubectl create secret generic vscode-password --namespace=home-assistant --from-literal=code-server-password='your_actual_password_here'
+```
+
+```bash
+kubectl apply -f code-server.yaml
+```
+
+### Nordpool, Energi Data Service & ApexCharts
+
+Once HACS is installed, the Nordpool, Energi Data Service, and ApexCharts integrations can be added via the UI.
+
+#### Heatpump Automation
+
+Create the Helpers
+Go to Settings > Devices & Services > Helpers and create the following:
+
+Type,Name,Entity ID (Suggested),Purpose
+Dropdown,Heatpump Strategy,input_select.heatpump_strategy,"Stores current mode (Boost, Normal, Reduce, Off)"
+Number,Heatpump Base Temperature,input_number.heatpump_base_temperature,Your slider for the standard target
+Number,Heatpump Boost Value,input_number.heatpump_boost_value,"Slider for the ""5 degree"" adjustment"
+
+The Economic AutomationThis logic uses your Base Temperature as the pivot. It calculates the targets dynamically: $Target = Base \pm Delta$.
+
+Script:
+
+```yaml
+alias: "Heatpump: Economic Logic"
+sequence:
+  - alias: "Initialize Variables & Log Entry"
+    variables:
+      p_boost: 0.50
+      p_reduce: 1.00
+      p_off: 1.50
+      e_price: sensor.energi_data_service
+      e_strategy: input_select.heatpump_strategy
+      e_base: input_number.heatpump_base_temperature
+      e_delta: input_number.heatpump_boost_value
+      # Calculation for easy viewing in traces
+      current_price: "{{ states(e_price) | float(0) }}"
+      base_temp: "{{ states(e_base) | float(20) }}"
+      boost_delta: "{{ states(e_delta) | float(5) }}"
+
+  - alias: "Write to Home Assistant Log"
+    action: system_log.write
+    data:
+      level: info
+      logger: custom_hp_steering
+      message: >
+        HP Steering Run: Price {{ current_price }} DKK. Base {{ base_temp }}°C. 
+        Current Strategy: {{ states(e_strategy) }}
+
+  - alias: "Branching Logic"
+    choose:
+      # 1. CRITICAL OFF
+      - alias: "Check: Critical Off Condition"
+        conditions:
+          - condition: template
+            value_template: "{{ current_price > p_off }}"
+          - condition: template
+            alias: "Safety: Check if Off < 4 hours"
+            value_template: >
+              {% set last_change = states[e_strategy].last_changed %}
+              {{ is_state(e_strategy, 'Off') == false or (now() - last_change).total_seconds() < 14400 }}
+        sequence:
+          - alias: "Strategy -> Off"
+            action: input_select.select_option
+            target:
+              entity_id: input_select.heatpump_strategy
+            data:
+              option: "Off"
+
+      # 2. BOOST
+      - alias: "Check: Boost Condition"
+        conditions:
+          - condition: template
+            value_template: "{{ current_price < p_boost }}"
+        sequence:
+          - alias: "Strategy -> Boost"
+            action: input_select.select_option
+            target:
+              entity_id: input_select.heatpump_strategy
+            data:
+              option: "Boost"
+          - alias: "Log Boost Target"
+            action: system_log.write
+            data:
+              level: info
+              logger: custom_hp_steering
+              message: "Boost Active. Calculated Target: {{ base_temp + boost_delta }}°C"
+
+      # 3. REDUCE
+      - alias: "Check: Reduce Condition"
+        conditions:
+          - condition: template
+            value_template: "{{ current_price > p_reduce }}"
+        sequence:
+          - alias: "Strategy -> Reduce"
+            action: input_select.select_option
+            target:
+              entity_id: input_select.heatpump_strategy
+            data:
+              option: "Reduce"
+          - alias: "Log Reduce Target"
+            action: system_log.write
+            data:
+              level: info
+              logger: custom_hp_steering
+              message: "Reduction Active. Calculated Target: {{ base_temp - boost_delta }}°C"
+
+      # 4. NORMAL
+      - alias: "Default: Normal Strategy"
+        conditions: []
+        sequence:
+          - alias: "Strategy -> Normal"
+            action: input_select.select_option
+            target:
+              entity_id: input_select.heatpump_strategy
+            data:
+              option: "Normal"
+
+mode: restart
+```
+
+Automation
+
+```yaml
+alias: "HP: Strategy Trigger"
+description: "Triggers the HP logic script on time or state change"
+trigger:
+  - platform: time_pattern
+    minutes: "/30"
+  - platform: state
+    entity_id:
+      - sensor.energi_data_service
+      - input_number.heatpump_base_temperature
+      - input_number.heatpump_boost_value
+action:
+  - action: script.hp_economic_logic
+```
