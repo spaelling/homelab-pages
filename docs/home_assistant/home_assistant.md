@@ -277,3 +277,11 @@ trigger:
 action:
   - action: script.hp_economic_logic
 ```
+
+Use [code.home-assistant.local.spaelling.xyz](https://code.home-assistant.local.spaelling.xyz/?folder=/config) to place `heatpump_control.py` inside `/config/python_scripts/`.
+
+Create a secret to hold the credentials for the Warmlink API and the device code for the heatpump.
+
+```bash
+kubectl create secret generic heatpump-warmlink-credentials --from-literal=HEATPUMP_USER='PLACEHOLDER' --from-literal=HEATPUMP_PASS='PLACEHOLDER' --from-literal=HEATPUMP_DEVICE_CODE='PLACEHOLDER' -n home-assistant
+```
