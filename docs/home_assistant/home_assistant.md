@@ -285,3 +285,9 @@ Create a secret to hold the credentials for the Warmlink API and the device code
 ```bash
 kubectl create secret generic heatpump-warmlink-credentials --from-literal=HEATPUMP_USER='PLACEHOLDER' --from-literal=HEATPUMP_PASS='PLACEHOLDER' --from-literal=HEATPUMP_DEVICE_CODE='PLACEHOLDER' -n home-assistant
 ```
+
+Can verify these are loaded as environment variables in the Home Assistant pod:
+
+```bash
+kubectl exec -it $(kubectl get pods -n home-assistant -l app=home-assistant -o jsonpath='{.items[0].metadata.name}') -n home-assistant -- env | grep HP_
+```
