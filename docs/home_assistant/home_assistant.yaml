@@ -35,6 +35,10 @@ metadata:
   namespace: home-assistant
 data:
   configuration.yaml: |
+    shell_command:
+      set_heatpump_temp: >
+        /bin/sh -c 'python3 /config/python_scripts/heatpump_control.py "$HP_USERNAME" "$HP_PASSWORD" "$HP_DEVICE_CODE" "{{ protocol_code }}" "{{ value }}"'
+        
     # === Core instance settings ===
     homeassistant:
       external_url: "https://home-assistant.local.spaelling.xyz"
@@ -60,6 +64,26 @@ data:
     automation: !include automations.yaml
     script: !include scripts.yaml
     scene: !include scenes.yaml
+
+    template:
+      - sensor:
+          - name: "Heat Pump Mode Description"
+            unique_id: heatpump_mode_description
+            state: >
+              {% set mode = states('sensor.operating_mode_mode') | int %}
+              {% if mode == 0 %}
+                Hot Water Only
+              {% elif mode == 3 %}
+                Hot Water & Heating
+              {% else %}
+                Unknown ({{ mode }})
+              {% endif %}
+            icon: >
+              {% if states('sensor.operating_mode_mode') | int == 0 %}
+                mdi:water-boiler
+              {% else %}
+                mdi:radiator
+              {% endif %}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -127,10 +151,31 @@ spec:
       containers:
         - name: home-assistant
           image: ghcr.io/home-assistant/home-assistant:stable
+          lifecycle:
+            postStart:
+              exec:
+                # install python requests library
+                command: ["/bin/sh", "-c", "pip install requests"]
           securityContext:
             privileged: true
           ports:
             - containerPort: 8123
+          env:
+            - name: HP_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: heatpump-warmlink-credentials
+                  key: HEATPUMP_USER
+            - name: HP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: heatpump-warmlink-credentials
+                  key: HEATPUMP_PASS
+            - name: HP_DEVICE_CODE
+              valueFrom:
+                secretKeyRef:
+                  name: heatpump-warmlink-credentials
+                  key: HEATPUMP_DEVICE_CODE
           volumeMounts:
             # PVC for persistent data
             - mountPath: /config
