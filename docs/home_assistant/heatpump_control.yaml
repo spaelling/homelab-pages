@@ -77,6 +77,9 @@ sequence:
             data:
               protocol_code: "Mode"
               value: "3" # 3 is Hot Water & Heating
+
+          - delay: "00:00:02" # <--- Critical: Give the API time to register Mode 3
+
           - action: shell_command.set_heatpump_temp
             data:
               protocol_code: "compensate_offset"
@@ -133,6 +136,9 @@ sequence:
             data:
               protocol_code: "Mode"
               value: "3" # 3 is Hot Water & Heating
+
+          - delay: "00:00:02" # <--- Critical: Give the API time to register Mode 3
+
           - action: shell_command.set_heatpump_temp
             data:
               protocol_code: "compensate_offset"
