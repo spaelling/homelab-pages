@@ -6,6 +6,7 @@ sequence:
       p_boost: 0.5
       p_reduce: 1.0
       p_off: 1.5
+      p_hard_off: 2.5
       # Entities
       e_price: sensor.energi_data_service
       e_strategy: input_select.heatpump_strategy
@@ -28,7 +29,23 @@ sequence:
 
   - alias: Branching Logic
     choose:
-      # 1. CRITICAL OFF (Price > 1.5 AND < 4 hours elapsed)
+      # HARD OFF (Ignore 4-hour limit if price is extreme)
+      - alias: "Check: Hard Off Condition"
+        conditions:
+          - condition: template
+            value_template: "{{ current_price > p_hard_off }}"
+        sequence:
+          - action: input_select.select_option
+            target:
+              entity_id: "{{ e_strategy }}"
+            data:
+              option: "Off"
+          - action: shell_command.set_heatpump_temp
+            data:
+              protocol_code: "Mode"
+              value: "0"
+
+      # CRITICAL OFF (Price > 1.5 AND < 4 hours elapsed)
       - alias: "Check: Critical Off Condition"
         conditions:
           - condition: template
@@ -62,7 +79,7 @@ sequence:
               protocol_code: "Mode"
               value: "0" # 0 is Hot Water only
 
-      # 2. BOOST (Price < 0.5)
+      # BOOST (Price < 0.5)
       - alias: "Check: Boost Condition"
         conditions:
           - condition: template
@@ -90,7 +107,7 @@ sequence:
               logger: custom_hp_steering
               message: "Boost Active. Calculated Target: {{ base_temp + boost_delta }}°C"
 
-      # 3. REDUCE
+      # REDUCE
       - alias: "Check: Reduce Condition"
         conditions:
           - condition: template
@@ -118,7 +135,7 @@ sequence:
               logger: custom_hp_steering
               message: "Reduction Active. Calculated Target: {{ base_temp - boost_delta }}°C"
 
-      # 4. DEFAULT (Normal Strategy)
+      # DEFAULT (Normal Strategy)
       - alias: "Default: Normal Strategy"
         conditions: []
         sequence:
