@@ -57,6 +57,10 @@ sequence:
               entity_id: "{{ e_strategy }}"
             data:
               option: "Off"
+          - action: shell_command.set_heatpump_temp
+            data:
+              protocol_code: "Mode"
+              value: "0" # 0 is Hot Water only
 
       # 2. BOOST (Price < 0.5)
       - alias: "Check: Boost Condition"
@@ -69,14 +73,21 @@ sequence:
               entity_id: "{{ e_strategy }}"
             data:
               option: "Boost"
+          - action: shell_command.set_heatpump_temp
+            data:
+              protocol_code: "Mode"
+              value: "3" # 3 is Hot Water & Heating
+          - action: shell_command.set_heatpump_temp
+            data:
+              protocol_code: "compensate_offset"
+              value: "{{ (base_temp + boost_delta) | int }}"
           - action: system_log.write
             data:
               level: info
               logger: custom_hp_steering
               message: "Boost Active. Calculated Target: {{ base_temp + boost_delta }}°C"
 
-      # 3. REDUCE (Price > 1.0)
-      # Note: This only runs if Price is <= 1.5 (otherwise the 'Off' block would have triggered)
+      # 3. REDUCE
       - alias: "Check: Reduce Condition"
         conditions:
           - condition: template
@@ -87,11 +98,22 @@ sequence:
               entity_id: "{{ e_strategy }}"
             data:
               option: "Reduce"
+          - action: shell_command.set_heatpump_temp
+            data:
+              protocol_code: "Mode"
+              value: "3" # 3 is Hot Water & Heating
+
+          - delay: "00:00:02" # <--- Critical: Give the API time to register Mode 3
+
+          - action: shell_command.set_heatpump_temp
+            data:
+              protocol_code: "compensate_offset"
+              value: "{{ (base_temp - boost_delta) | int }}"
           - action: system_log.write
             data:
               level: info
               logger: custom_hp_steering
-              message: "Reduction Active. Target: {{ base_temp - boost_delta }}°C"
+              message: "Reduction Active. Calculated Target: {{ base_temp - boost_delta }}°C"
 
       # 4. DEFAULT (Normal Strategy)
       - alias: "Default: Normal Strategy"
@@ -107,3 +129,11 @@ sequence:
               entity_id: "{{ e_strategy }}"
             data:
               option: "Normal"
+          - action: shell_command.set_heatpump_temp
+            data:
+              protocol_code: "Mode"
+              value: "3" # 3 is Hot Water & Heating
+          - action: shell_command.set_heatpump_temp
+            data:
+              protocol_code: "compensate_offset"
+              value: "{{ base_temp | int }}"

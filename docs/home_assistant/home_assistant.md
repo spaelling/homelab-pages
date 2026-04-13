@@ -164,118 +164,13 @@ The Economic AutomationThis logic uses your Base Temperature as the pivot. It ca
 Script:
 
 ```yaml
-alias: "Heatpump: Economic Logic"
-sequence:
-  - alias: "Initialize Variables & Log Entry"
-    variables:
-      p_boost: 0.50
-      p_reduce: 1.00
-      p_off: 1.50
-      e_price: sensor.energi_data_service
-      e_strategy: input_select.heatpump_strategy
-      e_base: input_number.heatpump_base_temperature
-      e_delta: input_number.heatpump_boost_value
-      # Calculation for easy viewing in traces
-      current_price: "{{ states(e_price) | float(0) }}"
-      base_temp: "{{ states(e_base) | float(20) }}"
-      boost_delta: "{{ states(e_delta) | float(5) }}"
-
-  - alias: "Write to Home Assistant Log"
-    action: system_log.write
-    data:
-      level: info
-      logger: custom_hp_steering
-      message: >
-        HP Steering Run: Price {{ current_price }} DKK. Base {{ base_temp }}°C. 
-        Current Strategy: {{ states(e_strategy) }}
-
-  - alias: "Branching Logic"
-    choose:
-      # 1. CRITICAL OFF
-      - alias: "Check: Critical Off Condition"
-        conditions:
-          - condition: template
-            value_template: "{{ current_price > p_off }}"
-          - condition: template
-            alias: "Safety: Check if Off < 4 hours"
-            value_template: >
-              {% set last_change = states[e_strategy].last_changed %}
-              {{ is_state(e_strategy, 'Off') == false or (now() - last_change).total_seconds() < 14400 }}
-        sequence:
-          - alias: "Strategy -> Off"
-            action: input_select.select_option
-            target:
-              entity_id: input_select.heatpump_strategy
-            data:
-              option: "Off"
-
-      # 2. BOOST
-      - alias: "Check: Boost Condition"
-        conditions:
-          - condition: template
-            value_template: "{{ current_price < p_boost }}"
-        sequence:
-          - alias: "Strategy -> Boost"
-            action: input_select.select_option
-            target:
-              entity_id: input_select.heatpump_strategy
-            data:
-              option: "Boost"
-          - alias: "Log Boost Target"
-            action: system_log.write
-            data:
-              level: info
-              logger: custom_hp_steering
-              message: "Boost Active. Calculated Target: {{ base_temp + boost_delta }}°C"
-
-      # 3. REDUCE
-      - alias: "Check: Reduce Condition"
-        conditions:
-          - condition: template
-            value_template: "{{ current_price > p_reduce }}"
-        sequence:
-          - alias: "Strategy -> Reduce"
-            action: input_select.select_option
-            target:
-              entity_id: input_select.heatpump_strategy
-            data:
-              option: "Reduce"
-          - alias: "Log Reduce Target"
-            action: system_log.write
-            data:
-              level: info
-              logger: custom_hp_steering
-              message: "Reduction Active. Calculated Target: {{ base_temp - boost_delta }}°C"
-
-      # 4. NORMAL
-      - alias: "Default: Normal Strategy"
-        conditions: []
-        sequence:
-          - alias: "Strategy -> Normal"
-            action: input_select.select_option
-            target:
-              entity_id: input_select.heatpump_strategy
-            data:
-              option: "Normal"
-
-mode: restart
+heatpump_control.yaml
 ```
 
-Automation
+Automation (create as automation)
 
 ```yaml
-alias: "HP: Strategy Trigger"
-description: "Triggers the HP logic script on time or state change"
-trigger:
-  - platform: time_pattern
-    minutes: "/30"
-  - platform: state
-    entity_id:
-      - sensor.energi_data_service
-      - input_number.heatpump_base_temperature
-      - input_number.heatpump_boost_value
-action:
-  - action: script.hp_economic_logic
+heatpump_control_steering.yaml
 ```
 
 Use [code.home-assistant.local.spaelling.xyz](https://code.home-assistant.local.spaelling.xyz/?folder=/config) to place `heatpump_control.py` inside `/config/python_scripts/`.
