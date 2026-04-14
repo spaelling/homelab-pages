@@ -55,7 +55,8 @@ sequence:
             value_template: >
               {% set off_since = states(e_off_helper) %}
               {% if is_state(e_strategy, 'Off') %}
-                {{ (now() - as_datetime(off_since)).total_seconds() < 14400 }}
+                {# Force both to UTC to ensure they are 'aware' and comparable #}
+                {{ (now() | as_utc - as_datetime(off_since) | as_utc).total_seconds() < 14400 }}
               {% else %}
                 true
               {% endif %}
