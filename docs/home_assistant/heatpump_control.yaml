@@ -3,7 +3,7 @@ sequence:
   - alias: Initialize Variables & Log Entry
     variables:
       # Thresholds
-      p_boost: 0.5
+      p_boost: 0.75
       p_reduce: 1.25
       p_off: 1.75
       p_hard_off: 2.5
