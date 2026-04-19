@@ -4,8 +4,8 @@ sequence:
     variables:
       # Thresholds
       p_boost: 0.5
-      p_reduce: 1.0
-      p_off: 1.5
+      p_reduce: 1.25
+      p_off: 1.75
       p_hard_off: 2.5
       # Entities
       e_price: sensor.energi_data_service
@@ -23,10 +23,9 @@ sequence:
     data:
       level: info
       logger: custom_hp_steering
-      message: >
+      message: |
         HP Steering Run: Price {{ current_price }} DKK. Base {{ base_temp }}°C. 
         Current Strategy: {{ states(e_strategy) }}
-
   - alias: Branching Logic
     choose:
       # HARD OFF (Ignore 4-hour limit if price is extreme)
@@ -45,14 +44,14 @@ sequence:
               protocol_code: "Mode"
               value: "0"
 
-      # CRITICAL OFF (Price > 1.5 AND < 4 hours elapsed)
+      # CRITICAL OFF (Price > 1.75 AND < 4 hours elapsed)
       - alias: "Check: Critical Off Condition"
         conditions:
           - condition: template
             value_template: "{{ current_price > p_off }}"
           - condition: template
             alias: "Safety: Total Off duration < 4 hours"
-            value_template: >
+            value_template: |
               {% set off_since = states(e_off_helper) %}
               {% if is_state(e_strategy, 'Off') %}
                 {# Force both to UTC to ensure they are 'aware' and comparable #}
