@@ -1,0 +1,18 @@
+sensor:
+  - name: "Heat Pump Mode Description"
+    unique_id: heatpump_mode_description
+    state: >
+      {% set mode = states('sensor.operating_mode_mode') | int %}
+      {% if mode == 0 %}
+        Hot Water Only
+      {% elif mode == 3 %}
+        Hot Water & Heating
+      {% else %}
+        Unknown ({{ mode }})
+      {% endif %}
+    icon: >
+      {% if states('sensor.operating_mode_mode') | int == 0 %}
+        mdi:water-boiler
+      {% else %}
+        mdi:radiator
+      {% endif %}
