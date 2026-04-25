@@ -13,8 +13,18 @@ sequence:
       e_base: input_number.heatpump_base_temperature
       e_delta: input_number.heatpump_boost_value
       e_off_helper: input_datetime.heatpump_off_since
+      e_thermostats:
+        - climate.esther
+        - climate.gustav
+        - climate.entre
+        - climate.sovevaerelse
+        - climate.badevaerelse
+        - climate.kokken
+      thermostat_normal_temp: 21
+      thermostat_boost_temp: 25
       # Values
       current_price: "{{ states(e_price) | float(0) }}"
+      current_strategy: "{{ states(e_strategy) }}"
       base_temp: "{{ states(e_base) | float(20) }}"
       boost_delta: "{{ states(e_delta) | float(5) }}"
 
@@ -25,7 +35,7 @@ sequence:
       logger: custom_hp_steering
       message: |
         HP Steering Run: Price {{ current_price }} DKK. Base {{ base_temp }}°C. 
-        Current Strategy: {{ states(e_strategy) }}
+        Current Strategy: {{ current_strategy }}. Boost Delta: {{ boost_delta }}°C.
   - alias: Branching Logic
     choose:
       # HARD OFF (Ignore 4-hour limit if price is extreme)
@@ -43,6 +53,14 @@ sequence:
             data:
               protocol_code: "Mode"
               value: "0"
+          - repeat:
+              for_each: "{{ e_thermostats }}"
+              sequence:
+                - action: climate.set_temperature
+                  target:
+                    entity_id: "{{ repeat.item }}"
+                  data:
+                    temperature: "{{ thermostat_normal_temp }}"
 
       # CRITICAL OFF (Price > 1.75 AND < 4 hours elapsed)
       - alias: "Check: Critical Off Condition"
@@ -78,6 +96,14 @@ sequence:
             data:
               protocol_code: "Mode"
               value: "0" # 0 is Hot Water only
+          - repeat:
+              for_each: "{{ e_thermostats }}"
+              sequence:
+                - action: climate.set_temperature
+                  target:
+                    entity_id: "{{ repeat.item }}"
+                  data:
+                    temperature: "{{ thermostat_normal_temp }}"
 
       # BOOST (Price < 0.5)
       - alias: "Check: Boost Condition"
@@ -101,6 +127,14 @@ sequence:
             data:
               protocol_code: "compensate_offset"
               value: "{{ (base_temp + boost_delta) | int }}"
+          - repeat:
+              for_each: "{{ e_thermostats }}"
+              sequence:
+                - action: climate.set_temperature
+                  target:
+                    entity_id: "{{ repeat.item }}"
+                  data:
+                    temperature: "{{ thermostat_boost_temp }}"
           - action: system_log.write
             data:
               level: info
@@ -134,6 +168,14 @@ sequence:
               level: info
               logger: custom_hp_steering
               message: "Reduction Active. Calculated Target: {{ base_temp - boost_delta }}°C"
+          - repeat:
+              for_each: "{{ e_thermostats }}"
+              sequence:
+                - action: climate.set_temperature
+                  target:
+                    entity_id: "{{ repeat.item }}"
+                  data:
+                    temperature: "{{ thermostat_normal_temp }}"
 
       # DEFAULT (Normal Strategy)
       - alias: "Default: Normal Strategy"
@@ -160,3 +202,11 @@ sequence:
             data:
               protocol_code: "compensate_offset"
               value: "{{ base_temp | int }}"
+          - repeat:
+              for_each: "{{ e_thermostats }}"
+              sequence:
+                - action: climate.set_temperature
+                  target:
+                    entity_id: "{{ repeat.item }}"
+                  data:
+                    temperature: "{{ thermostat_normal_temp }}"
