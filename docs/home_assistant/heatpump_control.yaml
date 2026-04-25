@@ -20,6 +20,13 @@ sequence:
         - climate.sovevaerelse
         - climate.badevaerelse
         - climate.kokken
+        - climate.viktualie
+      e_boost_thermostats:
+        - climate.esther
+        - climate.gustav
+        - climate.entre
+        - climate.badevaerelse
+        - climate.kokken
       thermostat_normal_temp: 21
       thermostat_boost_temp: 25
       # Values
@@ -128,7 +135,7 @@ sequence:
               protocol_code: "compensate_offset"
               value: "{{ (base_temp + boost_delta) | int }}"
           - repeat:
-              for_each: "{{ e_thermostats }}"
+              for_each: "{{ e_boost_thermostats }}"
               sequence:
                 - action: climate.set_temperature
                   target:
