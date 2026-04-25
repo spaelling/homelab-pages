@@ -204,7 +204,7 @@ sequence:
             target:
               entity_id: "{{ e_off_helper }}"
             data:
-              timestamp: "2000-01-01 00:00:00"
+              datetime: "2000-01-01 00:00:00"
           - action: input_select.select_option
             target:
               entity_id: "{{ e_strategy }}"
