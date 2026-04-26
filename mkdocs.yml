@@ -20,19 +20,21 @@ markdown_extensions:
 nav:
   - Homelab: index.md
   - Terminal:
-    - Warp: terminal/warp/warp.md
-    - Starship: terminal/starship/starship.md
+      - Warp: terminal/warp/warp.md
+      - Starship: terminal/starship/starship.md
   - k3s:
-    - Pre-requisites:
-      - Raspberry Pi: k3s/prerequisites/rpi.prereqs.md
-    - SSH: k3s/ssh.md
-    - Housekeeping: k3s/housekeeping.md
-    - Install: k3s/k3sup.md
-    - Kubevip: k3s/kubevip.md
-    - Longhorn: k3s/longhorn.md
-    - Sources: k3s/sources.md
+      - Pre-requisites:
+          - Raspberry Pi: k3s/prerequisites/rpi.prereqs.md
+      - SSH: k3s/ssh.md
+      - Housekeeping: k3s/housekeeping.md
+      - Install: k3s/k3sup.md
+      - Kubevip: k3s/kubevip.md
+      - Longhorn: k3s/longhorn.md
+      - Sources: k3s/sources.md
   - HTTPS:
-    - cert-manager: traefik/cert_manager.md
-    - Traefik: traefik/traefik.md
+      - cert-manager: traefik/cert_manager.md
+      - Traefik: traefik/traefik.md
   - Authentication:
-    - Authentik: authentik/authentik.md
+      - Authentik: authentik/authentik.md
+  - Home Automation:
+      - Home Assistant: home_assistant/home_assistant.md
