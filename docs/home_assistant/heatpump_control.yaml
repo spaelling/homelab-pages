@@ -19,14 +19,12 @@ sequence:
         - climate.gustav
         - climate.entre
         - climate.sovevaerelse
-        - climate.badevaerelse
         - climate.kokken
         - climate.viktualie
       e_boost_thermostats:
         - climate.esther
         - climate.gustav
         - climate.entre
-        - climate.badevaerelse
         - climate.kokken
         - climate.sovevaerelse
       thermostat_normal_temp: 21
