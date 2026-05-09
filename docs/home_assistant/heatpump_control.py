@@ -20,10 +20,10 @@ username = sys.argv[1]
 password = sys.argv[2]
 device_code = sys.argv[3]
 protocolCode = sys.argv[4]
-temperature = sys.argv[5]
+value = sys.argv[5]
 
 # Log input status (masking password)
-log_debug(f"Input: User={username}, Device={device_code}, Protocol={protocolCode}, Val={temperature}")
+log_debug(f"Input: User={username}, Device={device_code}, Protocol={protocolCode}, Val={value}")
 
 # Check for shell expansion failure
 if username.startswith("$") or device_code.startswith("$"):
@@ -59,8 +59,8 @@ try:
     headers = {"x-token": token, "Content-Type": "application/json; charset=utf-8"}
     payload = {
         "param": [
-            {"deviceCode": device_code, "protocolCode": protocolCode, "value": temperature},
-            {"deviceCode": device_code, "protocolCode": "22", "value": temperature}
+            {"deviceCode": device_code, "protocolCode": protocolCode, "value": value},
+            {"deviceCode": device_code, "protocolCode": "22", "value": value}
         ]
     }
     
